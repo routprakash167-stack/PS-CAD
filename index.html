@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Structural CAD</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+</head>
+<body>
+
+<div class="toolbar">
+    <button onclick="setTool('select')">Select</button>
+    <button onclick="setTool('line')">Line</button>
+    <button onclick="setTool('rect')">Rectangle</button>
+    <button onclick="setTool('circle')">Circle</button>
+    <button onclick="setTool('wall')">Wall</button>
+    <button onclick="clearCanvas()">Clear</button>
+</div>
+
+<canvas id="canvas"></canvas>
+
+<script src="script.js"></script>
+</body>
+</html>
