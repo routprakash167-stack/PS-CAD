@@ -1,23 +1,148 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Structural CAD</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Structural CAD Engine</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
+    <style>
+        body { margin: 0; overflow: hidden; }
+        .toolbar {
+            position: fixed;
+            top: 10px;
+            left: 10px;
+            background: #222;
+            padding: 10px;
+            z-index: 10;
+        }
+        button {
+            margin: 5px;
+        }
+        canvas {
+            background: #111;
+        }
+    </style>
 </head>
 <body>
 
 <div class="toolbar">
     <button onclick="setTool('select')">Select</button>
-    <button onclick="setTool('line')">Line</button>
     <button onclick="setTool('rect')">Rectangle</button>
-    <button onclick="setTool('circle')">Circle</button>
-    <button onclick="setTool('wall')">Wall</button>
     <button onclick="clearCanvas()">Clear</button>
 </div>
 
 <canvas id="canvas"></canvas>
 
-<script src="script.js"></script>
+<script>
+const canvas = new fabric.Canvas('canvas');
+canvas.setHeight(window.innerHeight);
+canvas.setWidth(window.innerWidth);
+
+let currentTool = "select";
+let isDrawing = false;
+let startX, startY;
+
+// ------------------
+// GRID SYSTEM
+// ------------------
+function drawGrid() {
+    const gridSize = 50;
+    for (let i = 0; i < (canvas.width / gridSize); i++) {
+        const distance = i * gridSize;
+        const vertical = new fabric.Line([distance, 0, distance, canvas.height], {
+            stroke: '#222',
+            selectable: false,
+            evented: false
+        });
+        const horizontal = new fabric.Line([0, distance, canvas.width, distance], {
+            stroke: '#222',
+            selectable: false,
+            evented: false
+        });
+        canvas.add(vertical);
+        canvas.add(horizontal);
+        canvas.sendToBack(vertical);
+        canvas.sendToBack(horizontal);
+    }
+}
+drawGrid();
+
+// ------------------
+// TOOL CONTROL
+// ------------------
+function setTool(tool) {
+    currentTool = tool;
+}
+
+function clearCanvas() {
+    canvas.clear();
+    drawGrid();
+}
+
+// ------------------
+// DRAW RECTANGLE
+// ------------------
+canvas.on('mouse:down', function(opt) {
+    if (currentTool === 'rect') {
+        isDrawing = true;
+        const pointer = canvas.getPointer(opt.e);
+        startX = pointer.x;
+        startY = pointer.y;
+    }
+});
+
+canvas.on('mouse:up', function(opt) {
+    if (isDrawing && currentTool === 'rect') {
+        const pointer = canvas.getPointer(opt.e);
+        const rect = new fabric.Rect({
+            left: startX,
+            top: startY,
+            width: pointer.x - startX,
+            height: pointer.y - startY,
+            fill: 'transparent',
+            stroke: 'white',
+            strokeWidth: 2
+        });
+        canvas.add(rect);
+        isDrawing = false;
+    }
+});
+
+// ------------------
+// ZOOM
+// ------------------
+canvas.on('mouse:wheel', function(opt) {
+    let delta = opt.e.deltaY;
+    let zoom = canvas.getZoom();
+    zoom *= 0.999 ** delta;
+    zoom = Math.min(Math.max(zoom, 0.5), 5);
+    canvas.zoomToPoint({ x: opt.e.offsetX, y: opt.e.offsetY }, zoom);
+    opt.e.preventDefault();
+    opt.e.stopPropagation();
+});
+
+// ------------------
+// PAN (ALT + Drag)
+// ------------------
+let isDragging = false;
+
+canvas.on('mouse:down', function(opt) {
+    if (opt.e.altKey === true) {
+        isDragging = true;
+        canvas.selection = false;
+    }
+});
+
+canvas.on('mouse:move', function(opt) {
+    if (isDragging) {
+        const e = opt.e;
+        canvas.relativePan(new fabric.Point(e.movementX, e.movementY));
+    }
+});
+
+canvas.on('mouse:up', function() {
+    isDragging = false;
+    canvas.selection = true;
+});
+</script>
+
 </body>
 </html>
